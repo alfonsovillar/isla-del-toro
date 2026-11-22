@@ -150,6 +150,9 @@ def main():
                 print(f"     {mdl:28} {fa:>34} | {fb:>22}")
         out["buoys"][code] = res
     p = ROOT / "data" / "phase0" / "buoys.json"
+    if not out["buoys"]:
+        # Sin ficheros de boyas (descarga fallida): se conserva el último buoys.json bueno.
+        raise SystemExit("Sin datos de boyas; no se sobrescribe buoys.json")
     p.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\nOK {p.relative_to(ROOT)}")
 
