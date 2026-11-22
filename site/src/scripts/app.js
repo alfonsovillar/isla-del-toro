@@ -7,6 +7,8 @@ const LOC = T.locale;
 const t = (k, v = {}) => String(T[k] ?? k).replace(/\{(\w+)\}/g, (_, n) => (v[n] ?? ""));
 const $ = (id) => document.getElementById(id);
 const DATA = (T.base || "/") + "data/";
+// La hora en la URL evita la caché de GitHub Pages (10 min): cada hora se piden los datos nuevos.
+const getJSON = (name) => fetch(`${DATA}${name}?h=${new Date().toISOString().slice(0, 13)}`).then((r) => r.json());
 const TZ = "Europe/Madrid";
 
 const TORO = [2.4717, 39.4623]; // centro del islote (OpenStreetMap)
@@ -85,7 +87,7 @@ function rose(wind, swell, cur) {
 
 const state = {};
 
-fetch(DATA + "openmeteo.json").then((r) => r.json()).then((d) => {
+getJSON("openmeteo.json").then((d) => {
   const key = hourKey(), keys = Object.keys(d.hours).sort();
   const hk = d.hours[key] ? key : keys.filter((k) => k <= key).pop(), h = d.hours[hk];
   const w = h.weather.meteofrance_arome_france_hd || h.weather.best_match;
@@ -140,7 +142,7 @@ function forecastTable(d, keys) {
 }
 
 // Copernicus Marine: columna de agua (MEDSEA), corriente por nivel y transparencia (KD490).
-fetch(DATA + "cmems.json").then((r) => r.json()).then((d) => {
+getJSON("cmems.json").then((d) => {
   const today = new Date().toISOString().slice(0, 10);
   const days = d.thetao.days, dep = d.thetao.depth_m;
   const day = days[today] ? today : Object.keys(days).filter((k) => k <= today).pop();
@@ -183,7 +185,7 @@ fetch(DATA + "cmems.json").then((r) => r.json()).then((d) => {
   } else $("kd-v").textContent = t("no_value");
 }).catch((e) => { $("prof-s").textContent = `${t("no_data")} (${e.message})`; });
 
-fetch(DATA + "buoys.json").then((r) => r.json()).then((d) => {
+getJSON("buoys.json").then((d) => {
   const tb = document.querySelector("#obs tbody");
   for (const [code, b] of Object.entries(d.buoys)) {
     const L = b.latest, last = Object.values(L).map((o) => o.time).sort().pop() || "";
@@ -230,7 +232,7 @@ function lineChart(el, o) {
   draw(); let tm; addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(draw, 150); });
 }
 
-fetch(DATA + "history.json").then((r) => r.json()).then((h) => {
+getJSON("history.json").then((h) => {
   const deg = (y) => num(y, Number.isInteger(y) ? 0 : 1) + "°";
   const doyOf = (k) => Math.round((Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) - Date.UTC(+k.slice(0, 4), 0, 1)) / 864e5) + 1;
   const monthTicks = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335].map((d, i) => [d + 14, MES[i]]).filter((_, i) => i % 2 === 0);
