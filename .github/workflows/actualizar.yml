@@ -1,0 +1,83 @@
+# Cada hora: descarga los datos (Open-Meteo, Copernicus, boyas), compila la web y la publica en GitHub Pages.
+# Una vez al día (03 UTC) también recalcula el histórico. Necesita dos secretos del repositorio:
+#   COPERNICUSMARINE_SERVICE_USERNAME y COPERNICUSMARINE_SERVICE_PASSWORD
+name: Actualizar y publicar
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # minuto 17 de cada hora (fuera del pico de las en punto)
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # Conserva entre ejecuciones los ficheros de boyas y el histórico calculado.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            data/raw
+            data/phase0
+          key: datos-${{ github.run_id }}
+          restore-keys: datos-
+
+      - name: Ingesta
+        env:
+          COPERNICUSMARINE_SERVICE_USERNAME: ${{ secrets.COPERNICUSMARINE_SERVICE_USERNAME }}
+          COPERNICUSMARINE_SERVICE_PASSWORD: ${{ secrets.COPERNICUSMARINE_SERVICE_PASSWORD }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          if [ "$(date -u +%H)" = "03" ] || [ "${{ github.event_name }}" != "schedule" ]; then
+            python ingest/run_all.py
+          else
+            python ingest/run_all.py --hourly
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Compilar la web
+        working-directory: site
+        env:
+          SITE_BASE: /${{ github.event.repository.name }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,145 @@
+---
+import "../../styles/global.css";
+import { ui, LANGS } from "../../i18n/ui.js";
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+const { lang } = Astro.params;
+const t = ui[lang];
+const ext = { target: "_blank", rel: "noopener" };
+const B = import.meta.env.BASE_URL.replace(/\/?$/, "/"); // ruta base con barra final
+---
+<!doctype html>
+<html lang={lang}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{t.meta_title}</title>
+<meta name="description" content={t.meta_desc}>
+{LANGS.map((l) => <link rel="alternate" hreflang={l} href={`${B}${l}/`} />)}
+<link rel="alternate" hreflang="x-default" href={`${B}es/`}>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2' fill='none' stroke='%237fd3ff' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+<body>
+<header>
+  <h1>{t.title} <small>· {t.subtitle}</small></h1>
+  <nav class="langs" aria-label="Idioma">
+    {LANGS.map((l) => <a href={`${B}${l}/`} class={l === lang ? "on" : ""} hreflang={l} lang={l}>{l.toUpperCase()}</a>)}
+  </nav>
+</header>
+
+<main class="dash">
+  <div class="panel">
+    <h2>{t.now_h}</h2>
+    <div class="rosewrap">
+      <div id="rose"></div>
+      <div class="lg">
+        <div><span class="sw" style="background:var(--wind)"></span><span>{t.lg_wind}</span></div>
+        <div><b id="lg-wind">…</b></div>
+        <div><span class="sw" style="background:var(--swell)"></span><span>{t.lg_swell}</span></div>
+        <div><b id="lg-swell">…</b></div>
+        <div><span class="sw" style="background:var(--cur)"></span><span>{t.lg_cur}</span></div>
+        <div><b id="lg-cur">…</b></div>
+      </div>
+    </div>
+    <div class="now">
+      <div class="card ic"><svg class="i" viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/></svg><div><div class="k">{t.k_wind}</div><div class="v" id="n-wind">…</div><div class="s" id="n-wind-s"></div></div></div>
+      <div class="card ic"><svg class="i" viewBox="0 0 24 24"><path d="M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 19c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M7 10c1-3 4-5 7-4-2 1-2 3 0 4"/></svg><div><div class="k">{t.k_wave}</div><div class="v" id="n-wave">…</div><div class="s" id="n-wave-s"></div></div></div>
+      <div class="card ic"><svg class="i" viewBox="0 0 24 24"><path d="M10 14V4a2 2 0 1 1 4 0v10a4 4 0 1 1-4 0zM12 9v7"/></svg><div><div class="k">{t.k_water}</div><div class="v" id="n-sst">…</div><div class="s">{t.s_water}</div></div></div>
+      <div class="card ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18 12h3M16.3 7.7l2.1-2.1M7 16a5 5 0 0 1 10 0M2 20h20"/></svg><div><div class="k">{t.k_cur}</div><div class="v" id="n-cur">…</div><div class="s" id="n-cur-s"></div></div></div>
+      <div class="card ic"><svg class="i" viewBox="0 0 24 24" style="stroke:var(--est)"><path d="M12 3v3M5.6 7.6l1.8 1.8M18.4 7.6l-1.8 1.8M7 16a5 5 0 0 1 10 0M2 16h3M19 16h3M2 20h20"/></svg><div><div class="k">{t.k_sun}</div><div class="v" id="n-sun" style="font-size:17px">…</div><div class="s" id="n-sun-s"></div></div></div>
+      <div class="card ic"><div id="moon-ic"></div><div><div class="k">{t.k_moon}</div><div class="v" id="n-moon" style="font-size:17px">…</div><div class="s" id="n-moon-s"></div></div></div>
+    </div>
+    <div class="src" id="stamp"></div>
+  </div>
+
+  <div class="panel">
+    <h2>{t.column_h}</h2>
+    <div id="column"></div>
+    <div class="src" id="prof-s"></div>
+  </div>
+
+  <div class="panel">
+    <h2>{t.buoys_h}</h2>
+    <table class="mini" id="obs"><thead><tr><th>{t.th_buoy}</th><th>{t.th_wind}</th><th>{t.th_wave}</th><th>{t.th_water}</th><th>{t.th_time}</th></tr></thead><tbody></tbody></table>
+    <div class="src">{t.buoys_note}</div>
+    <h2>{t.transp_h}</h2>
+    <div class="card"><div class="k">{t.transp_k}</div><div class="v" id="kd-v">…</div><div class="s" id="kd-s"></div></div>
+    <div id="kd-bars" style="margin-top:8px"></div>
+  </div>
+</main>
+
+<section class="block">
+  <h2>{t.fc_h}</h2>
+  <div class="tablewrap"><table class="fc" id="fc"></table></div>
+  <div class="src">{t.fc_src} <a href="https://www.windguru.cz/501125" {...ext}>Windguru · Santa Ponça ↗</a></div>
+</section>
+
+<div class="grid">
+  <div id="cam">
+    <h3>{t.cam_h}</h3>
+    <iframe src="https://str4.strei.es/canal_ac/embed.html" style="aspect-ratio:16/9" allow="autoplay; fullscreen" allowfullscreen loading="lazy" title={t.cam_h}></iframe>
+    <div class="src">{t.img}: <a href="https://www.calvia.com/es/areas-municipales/playas-y-litoral/observatorio-fondo-marino-calvia" {...ext}>Ajuntament de Calvià</a></div>
+  </div>
+  <div>
+    <h3>{t.webcam_h}</h3>
+    <div class="placeholder"><div>{t.webcam_ph}<br><br><a href="https://visiona.conectabalear.com/camara-punta-de-el-toro/c/62/" {...ext}>{t.webcam_go} ↗</a></div></div>
+    <div class="src">Webcam: <a href="https://visiona.conectabalear.com/" {...ext}>Visiona by ConectaBalear</a> · {t.webcam_pending}</div>
+  </div>
+  <div>
+    <h3>{t.sat_h}</h3>
+    <div id="sat"><div class="pin" id="sat-pin" title="Illa del Toro"></div></div>
+    <div class="player"><button id="sat-play" type="button">❚❚</button><input type="range" id="sat-range" min="0" max="0" value="0" aria-label={t.frame}><span id="sat-time">…</span></div>
+    <div class="src">{t.sat_src} © <a href="https://view.eumetsat.int" {...ext}>EUMETSAT</a></div>
+  </div>
+  <div>
+    <h3>{t.map_h}</h3>
+    <div id="map"><div class="mapbtns"><button id="home" type="button">⟲ {t.map_center}</button></div></div>
+    <div class="src" id="pnoa-date">{t.map_note}</div>
+  </div>
+</div>
+
+<section class="block">
+  <h2>{t.maps_h}</h2>
+  <div class="tiles" id="windy-tiles">
+    <div><h3>{t.w_wind}</h3><iframe data-o="wind" loading="lazy" title={`Windy ${t.w_wind}`}></iframe></div>
+    <div><h3>{t.w_gust}</h3><iframe data-o="gust" loading="lazy" title={`Windy ${t.w_gust}`}></iframe></div>
+    <div><h3>{t.w_waves}</h3><iframe data-o="waves" loading="lazy" title={`Windy ${t.w_waves}`}></iframe></div>
+    <div><h3>{t.w_swell}</h3><iframe data-o="swell1" loading="lazy" title={`Windy ${t.w_swell}`}></iframe></div>
+  </div>
+  <div class="src">{t.maps_src}: <a href="https://www.windy.com/39.462/2.472?39.462,2.472,10" {...ext}>Windy.com</a> · {t.model} ECMWF</div>
+</section>
+
+<section class="block">
+  <h2>{t.hist_h}</h2>
+  <div class="ayear" id="ayear"></div>
+  <div class="tiles hist">
+    <div><h3>{t.h_depth}</h3><div class="chart" id="ch-depth"></div><div class="src" id="ch-depth-s"></div></div>
+    <div><h3>{t.h_year}</h3><div class="chart" id="ch-year"></div><div class="src" id="ch-year-s"></div></div>
+    <div><h3>{t.h_trend}</h3><div class="chart" id="ch-trend"></div><div class="src" id="ch-trend-s"></div></div>
+    <div><h3>{t.h_wind}</h3><div class="chart" id="ch-wind"></div><div class="src">{t.h_wind_s}</div></div>
+    <div><h3>{t.h_wave}</h3><div class="chart" id="ch-wave"></div><div class="src">{t.h_wave_s}</div></div>
+  </div>
+  <div class="src">{t.hist_note}</div>
+</section>
+
+<footer>
+  {t.sources}: Ortofoto PNOA © <a href="https://www.ign.es">IGN</a> ·
+  <a href="https://open-meteo.com">Open-Meteo</a> (CC BY 4.0) ·
+  Generated using E.U. <a href="https://marine.copernicus.eu">Copernicus Marine Service</a> Information ·
+  <a href="https://www.puertos.es">Puertos del Estado</a> ·
+  Data obtained from <a href="https://www.socib.es">SOCIB</a><img src="https://www.socib.es/img/SOCIB-logo-white-standalone.svg" alt="SOCIB"> ·
+  © <a href="https://www.eumetsat.int">EUMETSAT</a> ·
+  <a href="https://www.windy.com">Windy</a> · <a href="https://www.windguru.cz">Windguru</a> ·
+  <a href="https://www.calvia.com">Ajuntament de Calvià</a> ·
+  Visiona (ConectaBalear).<br>
+  {t.disclaimer}
+</footer>
+
+<script type="application/json" id="i18n" set:html={JSON.stringify({ ...t, base: B })}></script>
+<script>
+  import "../../scripts/app.js";
+</script>
+</body>
+</html>

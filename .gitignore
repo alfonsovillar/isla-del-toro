@@ -1,0 +1,15 @@
+.env.local
+.env
+__pycache__/
+.venv/
+node_modules/
+dist/
+data/raw/
+*.nc
+*.sqlite
+
+# Entorno de trabajo privado: repositorio aparte, nunca en el público
+privado/
+CLAUDE.md
+.claude/
+data/vision_poc/

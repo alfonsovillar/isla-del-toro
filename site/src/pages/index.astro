@@ -1,0 +1,21 @@
+---
+// Portada sin idioma: envía al idioma del navegador (CA, ES, EN, DE) y, si no hay coincidencia, a ES.
+const B = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+---
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Illa del Toro</title>
+<meta http-equiv="refresh" content={`1; url=${B}es/`}>
+<script is:inline define:vars={{ B }}>
+  const pref = (navigator.languages || [navigator.language || "es"]).map((l) => l.slice(0, 2).toLowerCase());
+  const lang = pref.find((l) => ["ca", "es", "en", "de"].includes(l)) || "es";
+  location.replace(B + lang + "/");
+</script>
+</head>
+<body style="background:#0b1622;color:#e6eef5;font:14px system-ui">
+  <p><a href={`${B}ca/`} style="color:#7fd3ff">CA</a> · <a href={`${B}es/`} style="color:#7fd3ff">ES</a> · <a href={`${B}en/`} style="color:#7fd3ff">EN</a> · <a href={`${B}de/`} style="color:#7fd3ff">DE</a></p>
+</body>
+</html>
